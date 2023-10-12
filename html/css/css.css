@@ -1,0 +1,18 @@
+.layout {
+    width: 100%;
+    max-width: 90%;
+}
+
+.layout > div:first-child {
+    width: 100%;
+}
+
+.layout.hide-aside {
+    max-width: 90%;
+}
+/*css设置滚动条透明*/
+::-webkit-scrollbar {
+    height: 0;
+    width: 0;
+    color: transparent;
+}
