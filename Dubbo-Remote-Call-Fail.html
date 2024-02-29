@@ -1,0 +1,220 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Dubbo远程调用失败问题分析 | </title><meta name="author" content=""><meta name="copyright" content=""><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="问题现象（一） 项目中使用Dubbo进行业务开发时,遇到如下报错  12345678910111213141516171819&#x2F;&#x2F; 部分涉及隐私内容,已经做混淆处理九月 17 2023 21:31:10,650 ERROR com.alibaba.dubbo.remoting.transport.AbstractClient - Failed to start NettyClient &#x2F;192.1">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Dubbo远程调用失败问题分析">
+<meta property="og:url" content="https://blog.carnation.cc/Dubbo-Remote-Call-Fail.html">
+<meta property="og:site_name">
+<meta property="og:description" content="问题现象（一） 项目中使用Dubbo进行业务开发时,遇到如下报错  12345678910111213141516171819&#x2F;&#x2F; 部分涉及隐私内容,已经做混淆处理九月 17 2023 21:31:10,650 ERROR com.alibaba.dubbo.remoting.transport.AbstractClient - Failed to start NettyClient &#x2F;192.1">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.carnation.cc/images/Dubbo-Remote-Call-Fail/cover.png">
+<meta property="article:published_time" content="2023-09-08T21:42:37.000Z">
+<meta property="article:modified_time" content="2024-02-29T01:23:35.359Z">
+<meta property="article:tag" content="Python">
+<meta property="article:tag" content="Dubbo">
+<meta property="article:tag" content="java">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.carnation.cc/images/Dubbo-Remote-Call-Fail/cover.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://blog.carnation.cc/Dubbo-Remote-Call-Fail.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":380},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Dubbo远程调用失败问题分析',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: false,
+  postUpdate: '2024-02-29 01:23:35'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+        if (t === 'dark') activateDarkMode()
+        else if (t === 'light') activateLightMode()
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><link rel="stylesheet" href="html/css/css.css"><meta name="generator" content="Hexo 7.0.0-rc2"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://i.loli.net/2021/02/24/5O1day2nriDzjSu.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">4</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">9</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><hr class="custom-hr"/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> </span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url('/../images/Dubbo-Remote-Call-Fail/cover.png')"><nav id="nav"><span id="blog-info"><a href="/" title=""><span class="site-name"></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> </span></a></div></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Dubbo远程调用失败问题分析</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-09-08T21:42:37.000Z" title="发表于 2023-09-08 21:42:37">2023-09-08</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-02-29T01:23:35.359Z" title="更新于 2024-02-29 01:23:35">2024-02-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Web/">Web</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="Dubbo远程调用失败问题分析"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout hide-aside" id="content-inner"><div id="post"><article class="post-content" id="article-container"><h2 id="问题现象（一）"><a href="#问题现象（一）" class="headerlink" title="问题现象（一）"></a>问题现象（一）</h2><ul>
+<li>项目中使用Dubbo进行业务开发时,遇到如下报错</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 部分涉及隐私内容,已经做混淆处理</span></span><br><span class="line">九月 <span class="number">17</span> <span class="number">2023</span> <span class="number">21</span>:<span class="number">31</span>:<span class="number">10</span>,<span class="number">650</span> ERROR com.alibaba.dubbo.remoting.transport.AbstractClient - Failed to start NettyClient /<span class="number">192.168</span><span class="number">.3</span><span class="number">.63</span> connect to the server /<span class="number">192.168</span><span class="number">.3</span><span class="number">.63</span>:<span class="number">20880</span> (check == <span class="literal">false</span>, ignore and retry later!), cause: client(url: dubbo:<span class="comment">//192.168.3.63:20880/com.th.xxx.MipsDictService?anyhost=true&amp;application=mips-web&amp;check=false&amp;codec=dubbo&amp;default.check=false&amp;default.group=group-xxx&amp;default.service.filter=-exception,frameworkExceptionFilter&amp;default.timeout=10000&amp;dubbo=2.5.4-thzk-13&amp;group=group-xxx&amp;heartbeat=60000&amp;interface=com.th.xxx.MipsDictService&amp;methods=findPhamInfoListCount,findMipsDictByExample,findMipsMajorDiagnosisPagingByLeftForNphi,findMipsMajorDiagnosisByCondition,findMipsMajorDiagnosisForNphi,getMipsInsuranceType,findMipsMajorDiagnosis,findPhamInfoByProxy,getMipsDictDetailBy,getMipsDictByDictClassCodesNew,findMipsMajorDiagnosisByLeft,findMipsDict,findMipsDictClassListPaging,findMipsMajorDiagnosisPaging,findMipsDictList,findMipsMajorDiagnosisPagingByAll,findMipsMajorDiagnosisPagingByLeft,findMipsDictByExampleByScope,findMipsDictClassListCount,getMipsDictByDictClassCodes,findMipsMajorDiagnosisByLeftForNphi,findMipsSingleDiseasePaging,findMipsSingleDisease,findMipsMajorDiagnosisByAll,findMipsTmbDiagnosis,findMipsMajorDiagnosisPagingForNphi,findMipsDictByTypeId,getMipsDictDetailByCode&amp;pid=54907&amp;side=consumer&amp;timeout=300000&amp;timestamp=1694957466939) failed to connect to server /192.168.3.63:20880 client-side timeout 3000ms (elapsed: 3014ms) from netty client 192.168.3.63 using dubbo version 2.5.4-thzk-13</span></span><br><span class="line">com.alibaba.dubbo.remoting.RemotingException: client(url: dubbo:<span class="comment">//192.168.3.63:20880/com.th.xxx.MipsDictService?anyhost=true&amp;application=mips-web&amp;check=false&amp;codec=dubbo&amp;default.check=false&amp;default.group=group-xxx&amp;default.service.filter=-exception,frameworkExceptionFilter&amp;default.timeout=10000&amp;dubbo=2.5.4-thzk-13&amp;group=group-xxx&amp;heartbeat=60000&amp;interface=com.th.xxx.MipsDictService&amp;methods=findPhamInfoListCount,findMipsDictByExample,findMipsMajorDiagnosisPagingByLeftForNphi,findMipsMajorDiagnosisByCondition,findMipsMajorDiagnosisForNphi,getMipsInsuranceType,findMipsMajorDiagnosis,findPhamInfoByProxy,getMipsDictDetailBy,getMipsDictByDictClassCodesNew,findMipsMajorDiagnosisByLeft,findMipsDict,findMipsDictClassListPaging,findMipsMajorDiagnosisPaging,findMipsDictList,findMipsMajorDiagnosisPagingByAll,findMipsMajorDiagnosisPagingByLeft,findMipsDictByExampleByScope,findMipsDictClassListCount,getMipsDictByDictClassCodes,findMipsMajorDiagnosisByLeftForNphi,findMipsSingleDiseasePaging,findMipsSingleDisease,findMipsMajorDiagnosisByAll,findMipsTmbDiagnosis,findMipsMajorDiagnosisPagingForNphi,findMipsDictByTypeId,getMipsDictDetailByCode&amp;pid=54907&amp;side=consumer&amp;timeout=300000&amp;timestamp=1694957466939) failed to connect to server /192.168.3.63:20880 client-side timeout 3000ms (elapsed: 3014ms) from netty client 192.168.3.63 using dubbo version 2.5.4-thzk-13</span></span><br><span class="line">	at com.alibaba.dubbo.remoting.transport.netty.NettyClient.doConnect(NettyClient.java:<span class="number">166</span>)</span><br><span class="line">	at com.alibaba.dubbo.remoting.transport.AbstractClient.connect(AbstractClient.java:<span class="number">331</span>)</span><br><span class="line">	at com.alibaba.dubbo.remoting.transport.AbstractClient.&lt;init&gt;(AbstractClient.java:<span class="number">107</span>)</span><br><span class="line">	at com.alibaba.dubbo.remoting.transport.netty.NettyClient.&lt;init&gt;(NettyClient.java:<span class="number">70</span>)</span><br><span class="line">	at com.alibaba.dubbo.remoting.transport.netty.NettyTransporter.connect(NettyTransporter.java:<span class="number">37</span>)</span><br><span class="line">	at com.alibaba.dubbo.remoting.Transporter$Adpative.connect(Transporter$Adpative.java)</span><br><span class="line">	at com.alibaba.dubbo.remoting.Transporters.connect(Transporters.java:<span class="number">83</span>)</span><br><span class="line">	at com.alibaba.dubbo.remoting.exchange.support.header.HeaderExchanger.connect(HeaderExchanger.java:<span class="number">39</span>)</span><br><span class="line">	at com.alibaba.dubbo.remoting.exchange.Exchangers.connect(Exchangers.java:<span class="number">124</span>)</span><br><span class="line">	at com.alibaba.dubbo.rpc.protocol.dubbo.DubboProtocol.initClient(DubboProtocol.java:<span class="number">378</span>)</span><br><span class="line">	at com.alibaba.dubbo.rpc.protocol.dubbo.DubboProtocol.getSharedClient(DubboProtocol.java:<span class="number">344</span>)</span><br><span class="line">	at com.alibaba.dubbo.rpc.protocol.dubbo.DubboProtocol.getClients(DubboProtocol.java:<span class="number">321</span>)</span><br><span class="line">	at com.alibaba.dubbo.rpc.protocol.dubbo.DubboProtocol.refer(DubboProtocol.java:<span class="number">303</span>)</span><br><span class="line">	at com.alibaba.dubbo.rpc.protocol.ProtocolFilterWrapper.refer(ProtocolFilterWrapper.java:<span class="number">70</span>)</span><br><span class="line">	at com.alibaba.dubbo.rpc.protocol.ProtocolListenerWrapper.refer(ProtocolListenerWrapper.java:<span class="number">65</span>)</span><br><span class="line">	at com.alibaba.dubbo.rpc.Protocol$Adpative.refer(Protocol$Adpative.java)</span><br></pre></td></tr></table></figure>
+
+<h2 id="错误分析"><a href="#错误分析" class="headerlink" title="错误分析"></a>错误分析</h2><ul>
+<li>因为涉及到网络问题,先把网络情况描述清楚</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_"># </span><span class="language-bash">本机Wi-Fi网络</span></span><br><span class="line">en0: flags=8863&lt;UP,BROADCAST,SMART,RUNNING,SIMPLEX,MULTICAST&gt; mtu 1500</span><br><span class="line">	options=400&lt;CHANNEL_IO&gt;</span><br><span class="line">	ether 5c:e9:1e:83:99:5e</span><br><span class="line">	inet6 fe80::109b:21f3:9376:316%en0 prefixlen 64 secured scopeid 0xf</span><br><span class="line">	inet 192.168.3.63 netmask 0xffffff00 broadcast 192.168.3.255</span><br><span class="line">	nd6 options=201&lt;PERFORMNUD,DAD&gt;</span><br><span class="line">	media: autoselect</span><br><span class="line">	status: active</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">虚拟网卡VPN网络</span>	</span><br><span class="line">utun7: flags=8051&lt;UP,POINTOPOINT,RUNNING,MULTICAST&gt; mtu 1400</span><br><span class="line">	inet 172.19.1.129 --&gt; 172.19.1.129 netmask 0xffffffff</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>项目中的网络是VPN服务,使用的注册中心是客户现场的服务,但是从错误提示上面来看并没有注册到客户现场的服务</li>
+<li>顺着注册地址错误这条线分析,发现机器存在多网卡时会进行网卡轮训,挑选一个合适的地址进行注册,有可能出现获取到错误的地址,出现注册失败的情况（PS:轮询网卡出错,这时候在想,是否可以指定IP地址进行注册勒）</li>
+<li>既然是地址注册错误,跟着这个线索疯狂Baidu&#x2F;Google搜索,发现也有网友存在这种问题（附上链接文档,方便后续查询）<ul>
+<li><a target="_blank" rel="noopener" href="https://juejin.cn/post/7172162831582756894">记一次处理Dubbo多网卡注册IP错误问题</a></li>
+<li><a target="_blank" rel="noopener" href="https://cn.dubbo.apache.org/zh-cn/blog/2019/10/01/%E7%A0%94%E7%A9%B6-dubbo-%E7%BD%91%E5%8D%A1%E5%9C%B0%E5%9D%80%E6%B3%A8%E5%86%8C%E6%97%B6%E7%9A%84%E4%B8%80%E7%82%B9%E6%80%9D%E8%80%83">研究-dubbo-网卡地址注册时的一点思考</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="解决办法"><a href="#解决办法" class="headerlink" title="解决办法"></a>解决办法</h2><ul>
+<li>在项目启动VM options中添加配置参数,使用指定的网卡进行注册</li>
+</ul>
+<figure class="highlight properties"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 添加如下配置</span></span><br><span class="line"><span class="attr">-Ddubbo.network.interface.preferred</span>=<span class="string">utun7</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="问题现象（二）"><a href="#问题现象（二）" class="headerlink" title="问题现象（二）"></a>问题现象（二）</h2><ul>
+<li>通过指定网卡的方式来固定Dubbo的注册地址,虽然注册的IP地址已经没问题了,但是还是掉用不通</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 部分涉及隐私内容,已经做混淆处理</span></span><br><span class="line">九月 <span class="number">17</span> <span class="number">2023</span> <span class="number">22</span>:<span class="number">45</span>:<span class="number">30</span>,<span class="number">670</span> ERROR com.alibaba.dubbo.remoting.transport.AbstractClient - Failed to start NettyClient /<span class="number">172.19</span><span class="number">.1</span><span class="number">.129</span> connect to the server /<span class="number">172.19</span><span class="number">.1</span><span class="number">.129</span>:<span class="number">20880</span> (check == <span class="literal">false</span>, ignore and retry later!), cause: client(url: dubbo:<span class="comment">//172.19.1.129:20880/com.th.xxx.MipsDictService?anyhost=true&amp;application=mips-web&amp;check=false&amp;codec=dubbo&amp;default.check=false&amp;default.group=group-xxx&amp;default.service.filter=-exception,frameworkExceptionFilter&amp;default.timeout=10000&amp;dubbo=2.5.4-thzk-13&amp;group=group-xxx&amp;heartbeat=60000&amp;interface=com.th.xxx.MipsDictService&amp;methods=findPhamInfoListCount,findMipsDictByExample,findMipsMajorDiagnosisPagingByLeftForNphi,findMipsMajorDiagnosisByCondition,findMipsMajorDiagnosisForNphi,getMipsInsuranceType,findMipsMajorDiagnosis,findPhamInfoByProxy,getMipsDictDetailBy,getMipsDictByDictClassCodesNew,findMipsMajorDiagnosisByLeft,findMipsDict,findMipsDictClassListPaging,findMipsMajorDiagnosisPaging,findMipsDictList,findMipsMajorDiagnosisPagingByAll,findMipsMajorDiagnosisPagingByLeft,findMipsDictByExampleByScope,findMipsDictClassListCount,getMipsDictByDictClassCodes,findMipsMajorDiagnosisByLeftForNphi,findMipsSingleDiseasePaging,findMipsSingleDisease,findMipsMajorDiagnosisByAll,findMipsTmbDiagnosis,findMipsMajorDiagnosisPagingForNphi,findMipsDictByTypeId,getMipsDictDetailByCode&amp;pid=54907&amp;side=consumer&amp;timeout=300000&amp;timestamp=1694957466939) failed to connect to server /172.19.1.129:20880 client-side timeout 3000ms (elapsed: 3014ms) from netty client 172.19.1.129 using dubbo version 2.5.4-thzk-13</span></span><br><span class="line">com.alibaba.dubbo.remoting.RemotingException: client(url: dubbo:<span class="comment">//172.19.1.129:20880/com.th.xxx.MipsDictService?anyhost=true&amp;application=mips-web&amp;check=false&amp;codec=dubbo&amp;default.check=false&amp;default.group=group-xxx&amp;default.service.filter=-exception,frameworkExceptionFilter&amp;default.timeout=10000&amp;dubbo=2.5.4-thzk-13&amp;group=group-xxx&amp;heartbeat=60000&amp;interface=com.th.xxx.MipsDictService&amp;methods=findPhamInfoListCount,findMipsDictByExample,findMipsMajorDiagnosisPagingByLeftForNphi,findMipsMajorDiagnosisByCondition,findMipsMajorDiagnosisForNphi,getMipsInsuranceType,findMipsMajorDiagnosis,findPhamInfoByProxy,getMipsDictDetailBy,getMipsDictByDictClassCodesNew,findMipsMajorDiagnosisByLeft,findMipsDict,findMipsDictClassListPaging,findMipsMajorDiagnosisPaging,findMipsDictList,findMipsMajorDiagnosisPagingByAll,findMipsMajorDiagnosisPagingByLeft,findMipsDictByExampleByScope,findMipsDictClassListCount,getMipsDictByDictClassCodes,findMipsMajorDiagnosisByLeftForNphi,findMipsSingleDiseasePaging,findMipsSingleDisease,findMipsMajorDiagnosisByAll,findMipsTmbDiagnosis,findMipsMajorDiagnosisPagingForNphi,findMipsDictByTypeId,getMipsDictDetailByCode&amp;pid=54907&amp;side=consumer&amp;timeout=300000&amp;timestamp=1694957466939) failed to connect to server /172.19.1.129:20880 client-side timeout 3000ms (elapsed: 3014ms) from netty client 172.19.1.129 using dubbo version 2.5.4-thzk-13</span></span><br><span class="line">	at com.alibaba.dubbo.remoting.transport.netty.NettyClient.doConnect(NettyClient.java:<span class="number">166</span>)</span><br><span class="line">	at com.alibaba.dubbo.remoting.transport.AbstractClient.connect(AbstractClient.java:<span class="number">331</span>)</span><br><span class="line">	at com.alibaba.dubbo.remoting.transport.AbstractClient.&lt;init&gt;(AbstractClient.java:<span class="number">107</span>)</span><br><span class="line">	at com.alibaba.dubbo.remoting.transport.netty.NettyClient.&lt;init&gt;(NettyClient.java:<span class="number">70</span>)</span><br><span class="line">	at com.alibaba.dubbo.remoting.transport.netty.NettyTransporter.connect(NettyTransporter.java:<span class="number">37</span>)</span><br><span class="line">	at com.alibaba.dubbo.remoting.Transporter$Adpative.connect(Transporter$Adpative.java)</span><br><span class="line">	at com.alibaba.dubbo.remoting.Transporters.connect(Transporters.java:<span class="number">83</span>)</span><br><span class="line">	at com.alibaba.dubbo.remoting.exchange.support.header.HeaderExchanger.connect(HeaderExchanger.java:<span class="number">39</span>)</span><br><span class="line">	at com.alibaba.dubbo.remoting.exchange.Exchangers.connect(Exchangers.java:<span class="number">124</span>)</span><br><span class="line">	at com.alibaba.dubbo.rpc.protocol.dubbo.DubboProtocol.initClient(DubboProtocol.java:<span class="number">378</span>)</span><br><span class="line">	at com.alibaba.dubbo.rpc.protocol.dubbo.DubboProtocol.getSharedClient(DubboProtocol.java:<span class="number">344</span>)</span><br><span class="line">	at com.alibaba.dubbo.rpc.protocol.dubbo.DubboProtocol.getClients(DubboProtocol.java:<span class="number">321</span>)</span><br><span class="line">	at com.alibaba.dubbo.rpc.protocol.dubbo.DubboProtocol.refer(DubboProtocol.java:<span class="number">303</span>)</span><br><span class="line">	at com.alibaba.dubbo.rpc.protocol.ProtocolFilterWrapper.refer(ProtocolFilterWrapper.java:<span class="number">70</span>)</span><br><span class="line">	at com.alibaba.dubbo.rpc.protocol.ProtocolListenerWrapper.refer(ProtocolListenerWrapper.java:<span class="number">65</span>)</span><br><span class="line">	at com.alibaba.dubbo.rpc.Protocol$Adpative.refer(Protocol$Adpative.java)</span><br></pre></td></tr></table></figure>
+
+<h2 id="错误分析-1"><a href="#错误分析-1" class="headerlink" title="错误分析"></a>错误分析</h2><ul>
+<li>发现地址对了,但是还是调用不通,尝试ping一下IP看看,自己的IP竟然ping不通</li>
+<li>PS:ping本地VPN的IP不通,还未找到到原因,后续有时间分析下,这里通过调整路由表的方式解决</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">xxx@MacBook-Pro ~ % ping 172.19.1.129</span><br><span class="line">PING 172.19.1.129 (172.19.1.129): 56 data bytes</span><br><span class="line">Request timeout for icmp_seq 0</span><br><span class="line">Request timeout for icmp_seq 1</span><br><span class="line">Request timeout for icmp_seq 2</span><br><span class="line">Request timeout for icmp_seq 3</span><br><span class="line">Request timeout for icmp_seq 4</span><br></pre></td></tr></table></figure>
+
+<h2 id="解决办法-1"><a href="#解决办法-1" class="headerlink" title="解决办法"></a>解决办法</h2><ul>
+<li>使用路由表解决,控制注册本机的IP地址指向本机</li>
+</ul>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash"><span class="comment">#更新路由,删除原来的路由,然后更新路由指向本机</span></span></span><br><span class="line">sudo route -n delete 172.19.1.129 172.19.1.129</span><br><span class="line">sudo route add -net 172.19.1.129  127.0.0.1</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>调用成功</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"></span><br></pre></td></tr></table></figure>
+
+<h2 id="知识扩展"><a href="#知识扩展" class="headerlink" title="知识扩展"></a>知识扩展</h2><ul>
+<li>因为每次重新打开VPN后,VPN网卡的地址会更改,不可能每次都去手动执行shell来操作,所以这里写了个Python脚本,打开VPN后运行脚本,实现自动更新路由表</li>
+</ul>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 导包 ,用于执行系统命令</span></span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"><span class="comment"># 导包 ,用于定时器</span></span><br><span class="line"><span class="keyword">import</span> time</span><br><span class="line"></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">执行shell命令返回成功或者失败</span></span><br><span class="line"><span class="string">varIpv4 = os.system(&quot;ifconfig utun7 | grep inet | grep -v inet6 | sed &#x27;s/^[ \t]*//g&#x27; | cut -d &#x27; &#x27; -f 2| awk &#x27;&#123;print $1&#125;&#x27;&quot;);</span></span><br><span class="line"><span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="comment"># 管理员密码</span></span><br><span class="line">varPassword = <span class="string">&quot;xxxxxx&quot;</span></span><br><span class="line"><span class="comment"># 本机IP</span></span><br><span class="line">varLocalHost = <span class="string">&quot;127.0.0.1&quot;</span></span><br><span class="line"><span class="comment"># 死循环</span></span><br><span class="line"><span class="keyword">while</span> <span class="literal">True</span>:</span><br><span class="line">    time.sleep(<span class="number">10</span>)</span><br><span class="line">    <span class="built_in">print</span>(time.strftime(<span class="string">&quot;------------------------------begin:%Y-%m-%d %H:%M:%S------------------------------&quot;</span>,time.localtime()))</span><br><span class="line"></span><br><span class="line">    <span class="comment"># 执行shell命令返回执行结果</span></span><br><span class="line">    ifconfigShellSrt = <span class="string">&quot;ifconfig utun7 | grep inet | grep -v inet6 | sed &#x27;s/^[ \t]*//g&#x27; | cut -d &#x27; &#x27; -f 2| awk &#x27;&#123;print $1&#125;&#x27;&quot;</span></span><br><span class="line">    <span class="built_in">print</span>(<span class="string">&quot;获取IPv4命令:&quot;</span> + ifconfigShellSrt)</span><br><span class="line">    ifconfigShell = os.popen(ifconfigShellSrt)</span><br><span class="line">    <span class="string">&quot;&quot;&quot; 读取返回结果</span></span><br><span class="line"><span class="string">    readline 获取一行结果</span></span><br><span class="line"><span class="string">    strip 去除Python字符串中的空格</span></span><br><span class="line"><span class="string">        strip： 用来去除头尾字符、空白符(包括\n、\r、\t、&#x27; &#x27; ,即：换行、回车、制表符、空格)</span></span><br><span class="line"><span class="string">        lstrip：用来去除开头字符、空白符(包括\n、\r、\t、&#x27; &#x27; ,即：换行、回车、制表符、空格)</span></span><br><span class="line"><span class="string">        rstrip：用来去除结尾字符、空白符(包括\n、\r、\t、&#x27; &#x27; ,即：换行、回车、制表符、空格)</span></span><br><span class="line"><span class="string">        使用示例：</span></span><br><span class="line"><span class="string">        print(&quot;   cjavapy   &quot;.strip())            # returns &quot;cjavapy&quot;  </span></span><br><span class="line"><span class="string">        print(&quot;   cjavapy   &quot;.lstrip())           # returns &quot;cjavapy   &quot;  </span></span><br><span class="line"><span class="string">        print(&quot;   cjavapy   &quot;.rstrip())           # returns &quot;   cjavapy&quot;  </span></span><br><span class="line"><span class="string">        print(&quot;  c javapy py  &quot;.replace(&#x27; &#x27;, &#x27;&#x27;)) # returns &quot;cjavapy&quot; </span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span></span><br><span class="line">    varIpv4 = ifconfigShell.readline().strip()</span><br><span class="line">    <span class="comment"># 输出返回结果</span></span><br><span class="line">    <span class="keyword">if</span> <span class="built_in">len</span>(varIpv4) == <span class="number">0</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;获取IPv4失败&#x27;</span>)</span><br><span class="line">    <span class="keyword">else</span>:</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;获取IPv4成功:&#x27;</span> + varIpv4)</span><br><span class="line">        <span class="comment"># 获取当前IPv4指向的路由</span></span><br><span class="line">        varNetstatShellStr = <span class="string">&quot;netstat -nr | grep &quot;</span> + varIpv4</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&quot;获取网关命令:&quot;</span> + varNetstatShellStr)</span><br><span class="line">        varNetstatShell = os.popen(varNetstatShellStr)</span><br><span class="line">        <span class="comment"># 获取路由指向地址</span></span><br><span class="line">        varNetstat = varNetstatShell.readline().strip()</span><br><span class="line">        <span class="built_in">print</span>(<span class="string">&#x27;获取路由成功:&#x27;</span> + varNetstat)</span><br><span class="line">        <span class="keyword">if</span> varIpv4 == varNetstat <span class="keyword">or</span> -<span class="number">1</span> == varNetstat.find(varLocalHost):</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;路由地址异常,开始处理路由&quot;</span>)</span><br><span class="line">            <span class="comment"># 删除IPv4路由</span></span><br><span class="line">            deleteRouteStr = <span class="string">&quot;echo %s | sudo -S %s&quot;</span> % (varPassword, <span class="string">&quot;route -n delete &quot;</span> + varIpv4 + <span class="string">&quot; &quot;</span> + varIpv4)</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;删除路由命令:&quot;</span> + deleteRouteStr)</span><br><span class="line">            addRouteStr = <span class="string">&quot;echo %s | sudo -S %s&quot;</span> % (varPassword, <span class="string">&quot;route add -net &quot;</span> + varIpv4 + <span class="string">&quot; &quot;</span> + varLocalHost)</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;添加路由命令:&quot;</span> + addRouteStr)</span><br><span class="line">            varDeleteRoute = os.system(deleteRouteStr)</span><br><span class="line">            <span class="comment"># 返回0代表成功,否则失败</span></span><br><span class="line">            <span class="keyword">if</span> <span class="number">0</span> == varDeleteRoute:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">&quot;删除路由成功:&quot;</span> + varIpv4)</span><br><span class="line">                <span class="comment"># 添加IPv4路由</span></span><br><span class="line">                varAddRoute = os.system(addRouteStr)</span><br><span class="line">                <span class="keyword">if</span> <span class="number">0</span> == varAddRoute:</span><br><span class="line">                    <span class="built_in">print</span>(<span class="string">&quot;添加路由成功:&quot;</span> + varIpv4)</span><br><span class="line">                <span class="keyword">else</span>:</span><br><span class="line">                    <span class="built_in">print</span>(<span class="string">&quot;添加路由失败:&quot;</span> + varIpv4)</span><br><span class="line">            <span class="keyword">else</span>:</span><br><span class="line">                <span class="built_in">print</span>(<span class="string">&quot;删除路由失败:&quot;</span> + varIpv4)</span><br><span class="line">        <span class="keyword">else</span>:</span><br><span class="line">            <span class="built_in">print</span>(<span class="string">&quot;路由正常无需处理&quot;</span>)</span><br><span class="line">    <span class="built_in">print</span>(time.strftime(<span class="string">&quot;------------------------------end:%Y-%m-%d %H:%M:%S------------------------------&quot;</span>,time.localtime()))</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://blog.carnation.cc"></a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://blog.carnation.cc/Dubbo-Remote-Call-Fail.html">https://blog.carnation.cc/Dubbo-Remote-Call-Fail.html</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://blog.carnation.cc" target="_blank"></a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Python/">Python</a><a class="post-meta__tags" href="/tags/Dubbo/">Dubbo</a><a class="post-meta__tags" href="/tags/java/">java</a></div><div class="post_share"><div class="social-share" data-image="/../images/Dubbo-Remote-Call-Fail/cover.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/Mac-Configuration-Optimization.html" title="MacOS Ventura 13 优化配置（基于 ARM 平台）"><img class="cover" src="/../images/Mac-Configuration-Optimization/cover.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">MacOS Ventura 13 优化配置（基于 ARM 平台）</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/Record-CPU-100.html" title="死循环导致线上100%CPU"><img class="cover" src="/../images/record_cpu_100/cover.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-08-26</div><div class="title">死循环导致线上100%CPU</div></div></a></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2024 By </div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"></div><script defer src="html/js/init.js"></script><script defer="defer" id="fluttering_ribbon" mobile="true" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-fluttering-ribbon.min.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
